@@ -1,31 +1,23 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# Установка системных зависимостей
+# Устанавливаем зависимости системы
 RUN apt-get update && apt-get install -y \
-    libpq-dev \
     gcc \
-    gettext \
-    nodejs \
-    npm \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Python зависимости
+# Копируем зависимости
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Node.js зависимости для Tailwind
-COPY theme/package.json theme/package-lock.json ./theme/
-RUN cd theme && npm ci --only=production
-
-# Проект
+# Копируем код
 COPY . .
 
-# Сборка Tailwind CSS
-RUN cd theme && npm run build
+# Создаем статические файлы
+RUN python manage.py collectstatic --noinput
 
-# Готово! Статика будет собрана при запуске (в команде)
-# (убрали из Dockerfile, чтобы не зависеть от БД на этапе сборки)
+EXPOSE 8000
 
-CMD ["sh", "-c", "python manage.py collectstatic --noinput && python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "config.wsgi:application"]
