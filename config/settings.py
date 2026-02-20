@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from decouple import config  # pip install python-decouple
+from decouple import config
 
 # Основные пути
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -12,7 +12,10 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 
 SECRET_KEY = config('SECRET_KEY')
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='').split(',')
+ALLOWED_HOSTS = ['*'] 
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+
 
 # ============================================================================
 # ПРИЛОЖЕНИЯ
@@ -29,7 +32,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # ← для раздачи статики
+#    "whitenoise.middleware.WhiteNoiseMiddleware",  # ← для раздачи статики
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -60,27 +63,21 @@ WSGI_APPLICATION = "config.wsgi.application"
 # ============================================================================
 # БАЗА ДАННЫХ — PostgreSQL для продакшена
 # ============================================================================
-if DEBUG:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
+
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": config('DB_NAME', 'polling_db'),
+        "USER": config('DB_USER', 'polling_user'),
+        "PASSWORD": config('DB_PASSWORD', ''),
+        "HOST": config('DB_HOST', 'localhost'),
+        "PORT": config('DB_PORT', '5432'),
     }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": config('DB_NAME', 'polling_db'),
-            "USER": config('DB_USER', 'polling_user'),
-            "PASSWORD": config('DB_PASSWORD', ''),
-            "HOST": config('DB_HOST', 'localhost'),
-            "PORT": config('DB_PORT', '5432'),
-        }
-    }
-# ============================================================================
-# ВАЛИДАЦИЯ ПАРОЛЕЙ
-# ============================================================================
+}
+
+# ==
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
@@ -114,11 +111,12 @@ STATICFILES_DIRS = [
 ]
 
 # WhiteNoise для сжатия и кэширования статики
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+#STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # ============================================================================
 # АВТО-КЛЮЧ
 # ============================================================================
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # ============================================================================
@@ -126,3 +124,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # ============================================================================
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
