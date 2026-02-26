@@ -5,7 +5,7 @@
 
 import secrets
 import string
-
+from typing import Optional
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -286,7 +286,7 @@ class Answer(models.Model):
         ]
 
     @property
-    def is_correct(self) -> bool | None:
+    def is_correct(self) -> Optional[bool]:
         """
         Проверяет, правильный ли ответ.
         Возвращает:
